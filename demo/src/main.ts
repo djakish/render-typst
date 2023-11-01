@@ -2,8 +2,10 @@ import './style.css'
 import lin_font_r from '../assets/fonts/LinLibertine_R.ttf'
 import lin_font_rb from '../assets/fonts/LinLibertine_RB.ttf'
 import lin_font_rbi from '../assets/fonts/LinLibertine_RBI.ttf'
-import { addFont, setSource, renderSvgMerged } from '@djakish/render-typst';
 
+import init, { addFont, setSource, renderSvgMerged } from '@djakish/render-typst'
+
+await init();
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
