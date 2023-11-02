@@ -1,6 +1,6 @@
 [package]
 name = "render-typst"
-version = "0.1.3"
+version = "0.1.6"
 edition = "2021"
 repository = "https://github.com/djakish/render-typst/"
 keywords = ["typst", "wasm"]
@@ -8,7 +8,7 @@ description = "Render some typst in browser"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
 typst = { git = "https://github.com/typst/typst.git", tag = "v0.8.0" }

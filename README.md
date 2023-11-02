@@ -4,7 +4,7 @@ SVG/PDF render some typst text, only got it working with vite.
 # Usage
 
 ```ts
-import { addFont, setSource, renderSvgMerged } from '@djakish/render-typst';
+import init, { addFont, setSource, renderSvgMerged } from '@djakish/render-typst'
 import lin_font_r from '../assets/fonts/LinLibertine_R.ttf'
 
 // Load a font
@@ -27,5 +27,5 @@ With vite you would need [vite-plugin-wasm](https://www.npmjs.com/package/vite-p
 You need wasm-pack and rust, and dependecies for them.
 
 ```sh
-wasm-pack build --target web 
+wasm-pack build --target bundler 
 ```
