@@ -10,11 +10,12 @@ use typst::{
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
+
 static mut INSTANCE: OnceLock<WasmWorld> = OnceLock::new();
 
 #[wasm_bindgen(module = "/js/utils.js")]
 extern "C" {
-    async fn fetchFontAsByteArray(fontUrl: &str) -> JsValue;
+    async fn fetchDataAsByteArray(fontUrl: &str) -> JsValue;
 }
 
 #[wasm_bindgen(start)]
@@ -38,8 +39,8 @@ fn world() -> &'static mut WasmWorld {
 }
 
 #[wasm_bindgen(js_name = addFont)]
-pub async fn add_font(font_url: &str) -> Result<(), JsValue>  {
-    let font = fetchFontAsByteArray(font_url).await;
+pub async fn add_font(font_url: &str) -> Result<(), JsValue> {
+    let font = fetchDataAsByteArray(font_url).await;
     let array = js_sys::Uint8Array::new(&font);
     let bytes: Vec<u8> = array.to_vec();
 
@@ -48,7 +49,7 @@ pub async fn add_font(font_url: &str) -> Result<(), JsValue>  {
     for font in Font::iter(buffer) {
         world.book.update(|book| book.push(font.info().clone()));
         world.fonts.push(font);
-    };
+    }
 
     Ok(())
 }
@@ -56,7 +57,7 @@ pub async fn add_font(font_url: &str) -> Result<(), JsValue>  {
 #[wasm_bindgen(js_name = setSource)]
 pub fn set_source(text: &str) {
     let world = world();
-    world.source.replace(text.to_owned());
+    world.source.replace(text);
 }
 
 fn compile() -> Document {
@@ -80,12 +81,24 @@ pub fn render_svg(page: usize) -> String {
     typst::export::svg(&document.pages[page])
 }
 
+#[wasm_bindgen(js_name = renderPng)]
+pub fn render_png(page: usize, pixel_per_pt: f32) -> Vec<u8> {
+    let document = compile();
+
+    let pixmap = typst::export::render(&document.pages[page], pixel_per_pt, typst::geom::Color::WHITE);
+    
+    pixmap.encode_png().unwrap()
+}
+
 #[wasm_bindgen(js_name = renderPdf)]
 pub fn render_pdf() -> Vec<u8> {
     let document = compile();
+    let world = world();
 
-    typst::export::pdf(&document)
+    typst::export::pdf(&document, Some(""), world.today(Some(0)))
 }
+
+
 
 pub struct WasmWorld {
     library: Prehashed<Library>,
@@ -120,6 +133,6 @@ impl World for WasmWorld {
     }
 
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
-        unimplemented!()
+        Some(Datetime::from_ymd(1970, 1, 1).unwrap())
     }
 }

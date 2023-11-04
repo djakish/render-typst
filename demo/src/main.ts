@@ -3,7 +3,7 @@ import lin_font_r from '../assets/fonts/LinLibertine_R.ttf'
 import lin_font_rb from '../assets/fonts/LinLibertine_RB.ttf'
 import lin_font_rbi from '../assets/fonts/LinLibertine_RBI.ttf'
 
-import  init, {addFont, setSource, renderSvgMerged } from '@djakish/render-typst'
+import {addFont, setSource, renderSvgMerged } from '@djakish/render-typst'
 
 addFont(lin_font_r)
 addFont(lin_font_rb)
