@@ -2,12 +2,17 @@ use comemo::Prehashed;
 use std::sync::OnceLock;
 use typst::{
     diag::FileResult,
-    doc::Document,
-    eval::{Bytes, Datetime, Library, Tracer},
-    font::{Font, FontBook},
+    model::Document,
+    eval::{Tracer},
+    foundations::{Bytes, Datetime},
+    text::{Font, FontBook},
     syntax::{FileId, Source},
     World,
+    Library,
 };
+use typst_pdf;
+use typst_svg;
+use typst_render;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsValue;
 
@@ -25,7 +30,7 @@ fn start() {
             let book = FontBook::new();
             let fonts = Vec::new();
             WasmWorld {
-                library: Prehashed::new(typst_library::build()),
+                library: Prehashed::new(Library::build()),
                 book: Prehashed::new(book),
                 fonts,
                 source: Source::detached(""),
@@ -71,21 +76,21 @@ fn compile() -> Document {
 pub fn render_svg_merged() -> String {
     let document = compile();
 
-    typst::export::svg_merged(&document.pages, typst::geom::Abs::pt(5.0))
+    typst_svg::svg_merged(&document.pages, typst::layout::Abs::pt(5.0))
 }
 
 #[wasm_bindgen(js_name = renderSvg)]
 pub fn render_svg(page: usize) -> String {
     let document = compile();
 
-    typst::export::svg(&document.pages[page])
+    typst_svg::svg(&document.pages[page])
 }
 
 #[wasm_bindgen(js_name = renderPng)]
 pub fn render_png(page: usize, pixel_per_pt: f32) -> Vec<u8> {
     let document = compile();
 
-    let pixmap = typst::export::render(&document.pages[page], pixel_per_pt, typst::geom::Color::WHITE);
+    let pixmap = typst_render::render(&document.pages[page], pixel_per_pt, typst::visualize::Color::WHITE);
     
     pixmap.encode_png().unwrap()
 }
@@ -95,7 +100,7 @@ pub fn render_pdf() -> Vec<u8> {
     let document = compile();
     let world = world();
 
-    typst::export::pdf(&document, Some(""), world.today(Some(0)))
+    typst_pdf::pdf(&document, Some(""), world.today(Some(0)))
 }
 
 

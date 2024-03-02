@@ -11,8 +11,10 @@ description = "Render some typst in browser"
 crate-type = ["cdylib"]
 
 [dependencies]
-typst = { git = "https://github.com/typst/typst.git", tag = "v0.9.0" }
-typst-library = { git = "https://github.com/typst/typst.git", tag = "v0.9.0" }
+typst = { git = "https://github.com/typst/typst.git", tag = "v0.10.0" }
+typst-pdf = { git = "https://github.com/typst/typst.git", tag = "v0.10.0" }
+typst-svg = { git = "https://github.com/typst/typst.git", tag = "v0.10.0" }
+typst-render = { git = "https://github.com/typst/typst.git", tag = "v0.10.0" }
 comemo = "0.3"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.37"
