@@ -6,5 +6,5 @@ publish:
     cd pkg && npm publish --access=public
 
 demo:   
-    cd demo && pnpm run dev
+    cd demo && pnpm install && pnpm run dev
 

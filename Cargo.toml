@@ -1,6 +1,6 @@
 [package]
 name = "render-typst"
-version = "0.1.7"
+version = "0.1.9"
 edition = "2021"
 repository = "https://github.com/djakish/render-typst/"
 keywords = ["typst", "wasm"]

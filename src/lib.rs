@@ -1,14 +1,7 @@
 use comemo::Prehashed;
-use std::sync::OnceLock;
+use std::{collections::HashMap, iter::Once, sync::{OnceLock, RwLock}};
 use typst::{
-    diag::FileResult,
-    model::Document,
-    eval::{Tracer},
-    foundations::{Bytes, Datetime},
-    text::{Font, FontBook},
-    syntax::{FileId, Source},
-    World,
-    Library,
+    diag::FileResult, eval::Tracer, foundations::{Bytes, Datetime}, model::Document, syntax::{FileId, Source, VirtualPath}, text::{Font, FontBook}, Library, World
 };
 use typst_pdf;
 use typst_svg;
@@ -33,7 +26,8 @@ fn start() {
                 library: Prehashed::new(Library::build()),
                 book: Prehashed::new(book),
                 fonts,
-                source: Source::detached(""),
+                source: Source::detached("main.typ"),
+                slots: RwLock::new(HashMap::new()),
             }
         })
     };
@@ -55,6 +49,26 @@ pub async fn add_font(font_url: &str) -> Result<(), JsValue> {
         world.book.update(|book| book.push(font.info().clone()));
         world.fonts.push(font);
     }
+
+    Ok(())
+}
+
+#[wasm_bindgen(js_name = addFile)]
+pub async fn add_file(data_url: &str, name: &str) -> Result<(), JsValue> {
+    let file = fetchDataAsByteArray(data_url).await;
+    let array = js_sys::Uint8Array::new(&file);
+    let bytes: Vec<u8> = array.to_vec();
+
+    let world = world();
+    let buffer = Bytes::from(bytes);
+
+    let key = FileId::new(None, VirtualPath::new(name));
+    let source = Source::detached(name);
+
+    world.slots.write().unwrap().entry(key).or_insert_with(|| FileSlot {
+        source: OnceLock::from(Ok(source.clone())),
+        buffer: OnceLock::from(Ok(buffer.clone()))
+    });
 
     Ok(())
 }
@@ -103,13 +117,18 @@ pub fn render_pdf() -> Vec<u8> {
     typst_pdf::pdf(&document, Some(""), world.today(Some(0)))
 }
 
-
-
 pub struct WasmWorld {
     library: Prehashed<Library>,
     book: Prehashed<FontBook>,
     fonts: Vec<Font>,
     source: Source,
+    slots: RwLock<HashMap<FileId, FileSlot>>,
+}
+
+#[derive(Clone)]
+struct FileSlot {
+    source: OnceLock<FileResult<Source>>,
+    buffer: OnceLock<FileResult<Bytes>>,
 }
 
 impl World for WasmWorld {
@@ -129,8 +148,12 @@ impl World for WasmWorld {
         unimplemented!()
     }
 
-    fn file(&self, _id: FileId) -> FileResult<Bytes> {
-        unimplemented!()
+    fn file(&self, id: FileId) -> FileResult<Bytes> {
+        let state = self.slots.read().unwrap();
+        let data = state.get(&id).unwrap();
+        let byte = data.buffer.get().unwrap();
+
+        byte.clone()
     }
 
     fn font(&self, index: usize) -> Option<Font> {
