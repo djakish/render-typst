@@ -1,5 +1,5 @@
 use comemo::Prehashed;
-use std::{collections::HashMap, iter::Once, sync::{OnceLock, RwLock}};
+use std::{collections::HashMap, sync::{OnceLock, RwLock}};
 use typst::{
     diag::FileResult, eval::Tracer, foundations::{Bytes, Datetime}, model::Document, syntax::{FileId, Source, VirtualPath}, text::{Font, FontBook}, Library, World
 };
@@ -117,6 +117,13 @@ pub fn render_pdf() -> Vec<u8> {
     typst_pdf::pdf(&document, Some(""), world.today(Some(0)))
 }
 
+#[wasm_bindgen(js_name = pagesCount)]
+pub fn pages_count() -> usize {
+    let document = compile();
+
+    document.pages.len()
+}
+
 pub struct WasmWorld {
     library: Prehashed<Library>,
     book: Prehashed<FontBook>,
@@ -149,11 +156,11 @@ impl World for WasmWorld {
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
-        let state = self.slots.read().unwrap();
-        let data = state.get(&id).unwrap();
-        let byte = data.buffer.get().unwrap();
+        let locked_slot = self.slots.read().unwrap();
+        let slot = locked_slot.get(&id).unwrap();
+        let bytes = slot.buffer.get().unwrap();
 
-        byte.clone()
+        bytes.clone()
     }
 
     fn font(&self, index: usize) -> Option<Font> {

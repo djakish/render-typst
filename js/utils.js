@@ -1,6 +1,6 @@
-export async function fetchDataAsByteArray(fontUrl) {
+export async function fetchDataAsByteArray(dataUrl) {
     try {
-      const response = await fetch(fontUrl);
+      const response = await fetch(dataUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
