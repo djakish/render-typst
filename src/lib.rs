@@ -26,7 +26,7 @@ fn start() {
                 library: Prehashed::new(LibraryBuilder::default().build()),
                 book: Prehashed::new(book),
                 fonts,
-                source: Source::detached("main.typ"),
+                main: FileId::new(None, VirtualPath::new("main.typ")),
                 slots: RwLock::new(HashMap::new()),
             }
         })
@@ -73,10 +73,21 @@ pub async fn add_file(data_url: &str, name: &str) -> Result<(), JsValue> {
     Ok(())
 }
 
+#[wasm_bindgen(js_name = addSource)]
+pub fn add_source(text: &str, name: &str) {
+    let world = world();
+    let file_id = FileId::new(None, VirtualPath::new(name));
+    let source = Source::new(file_id, String::from(text));
+
+    world.slots.write().unwrap().insert(file_id, FileSlot {
+        source: OnceLock::from(Ok(source.clone())),
+        buffer: OnceLock::from(Ok(Bytes::from(source.text().as_bytes().to_vec())))
+    });
+}
+
 #[wasm_bindgen(js_name = setSource)]
 pub fn set_source(text: &str) {
-    let world = world();
-    world.source.replace(text);
+    add_source(text, "main.typ")
 }
 
 #[wasm_bindgen(js_name = setInputs)]
@@ -139,7 +150,7 @@ pub struct WasmWorld {
     library: Prehashed<Library>,
     book: Prehashed<FontBook>,
     fonts: Vec<Font>,
-    source: Source,
+    main: FileId,
     slots: RwLock<HashMap<FileId, FileSlot>>,
 }
 
@@ -159,11 +170,13 @@ impl World for WasmWorld {
     }
 
     fn main(&self) -> Source {
-        self.source.clone()
+        self.source(self.main).unwrap()
     }
 
     fn source(&self, _id: FileId) -> FileResult<Source> {
-        unimplemented!()
+        let locked_slot = self.slots.read().unwrap();
+        let slot = locked_slot.get(&_id).unwrap();
+        slot.source.get().unwrap().clone()
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
