@@ -10,8 +10,13 @@ import lin_font_r from '../assets/fonts/LinLibertine_R.ttf'
 // Load a font
 await addFont(lin_font_r)
 
+// Set input values
+setInputs({
+    "name": "world",
+})
+
 // Set source to the wasm 
-setSource(`#text("Hello world!",fill: red)`);
+setSource(`#text([Hello #sys.inputs.name!],fill: red)`);
 
 // Get rendered SVG
 let doc = renderSvgMerged()

@@ -1,8 +1,8 @@
 use comemo::Prehashed;
 use std::{collections::HashMap, sync::{OnceLock, RwLock}};
-use typst::{
-    diag::FileResult, eval::Tracer, foundations::{Bytes, Datetime}, model::Document, syntax::{FileId, Source, VirtualPath}, text::{Font, FontBook}, Library, World
-};
+use typst::{diag::FileResult, eval::Tracer, foundations::{Bytes, Datetime}, model::Document, syntax::{FileId, Source, VirtualPath}, text::{Font, FontBook}, Library, World, LibraryBuilder};
+use typst::foundations::{Smart, Str, Value};
+use typst::foundations::Dict;
 use typst_pdf;
 use typst_svg;
 use typst_render;
@@ -23,7 +23,7 @@ fn start() {
             let book = FontBook::new();
             let fonts = Vec::new();
             WasmWorld {
-                library: Prehashed::new(Library::build()),
+                library: Prehashed::new(LibraryBuilder::default().build()),
                 book: Prehashed::new(book),
                 fonts,
                 source: Source::detached("main.typ"),
@@ -79,6 +79,17 @@ pub fn set_source(text: &str) {
     world.source.replace(text);
 }
 
+#[wasm_bindgen(js_name = setInputs)]
+pub fn set_inputs(value: JsValue) {
+    let inputs: HashMap<String, String> = serde_wasm_bindgen::from_value(value).unwrap();
+    let mut dict = Dict::new();
+    for (key, value) in inputs {
+        dict.insert(Str::from(key), Value::Str(Str::from(value)));
+    }
+    let world = world();
+    world.library = Prehashed::new(LibraryBuilder::default().with_inputs(dict).build());
+}
+
 fn compile() -> Document {
     let world = world();
     let mut tracer = Tracer::new();
@@ -90,21 +101,21 @@ fn compile() -> Document {
 pub fn render_svg_merged() -> String {
     let document = compile();
 
-    typst_svg::svg_merged(&document.pages, typst::layout::Abs::pt(5.0))
+    typst_svg::svg_merged(&document, typst::layout::Abs::pt(5.0))
 }
 
 #[wasm_bindgen(js_name = renderSvg)]
 pub fn render_svg(page: usize) -> String {
     let document = compile();
 
-    typst_svg::svg(&document.pages[page])
+    typst_svg::svg(&document.pages[page].frame)
 }
 
 #[wasm_bindgen(js_name = renderPng)]
 pub fn render_png(page: usize, pixel_per_pt: f32) -> Vec<u8> {
     let document = compile();
 
-    let pixmap = typst_render::render(&document.pages[page], pixel_per_pt, typst::visualize::Color::WHITE);
+    let pixmap = typst_render::render(&document.pages[page].frame, pixel_per_pt, typst::visualize::Color::WHITE);
     
     pixmap.encode_png().unwrap()
 }
@@ -114,7 +125,7 @@ pub fn render_pdf() -> Vec<u8> {
     let document = compile();
     let world = world();
 
-    typst_pdf::pdf(&document, Some(""), world.today(Some(0)))
+    typst_pdf::pdf(&document, Smart::Auto, world.today(Some(0)))
 }
 
 #[wasm_bindgen(js_name = pagesCount)]
