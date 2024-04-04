@@ -4,13 +4,14 @@ import lin_font_rb from '../assets/LinLibertine_RB.ttf'
 import lin_font_rbi from '../assets/LinLibertine_RBI.ttf'
 import test from '../assets/test.png'
 
-import {addFont, addFile, setSource, renderSvgMerged } from '@djakish/render-typst'
+import { addFont, addFile, setInputs, addSource, renderSvgMerged } from '@djakish/render-typst'
 
 addFont(lin_font_r)
 addFont(lin_font_rb)
 addFont(lin_font_rbi)
 
-// you have to manually set the name of the file
+// Adding other type of files to the world
+// .typ files don't work
 addFile(test, "test.png")
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
@@ -27,13 +28,23 @@ const button = document.querySelector<HTMLButtonElement>('#renderer')!;
 
 button.onclick = () => {
   let preview = document.querySelector<HTMLDivElement>('#preview')!;
-  // Set source to the wasm 
-  setSource(`
-    #text("Hello world!",fill: red)
-    #image("test.png")
-  `);
+
+  // Set input values, this is how add additional inputs
+  setInputs({
+    "name": "world",
+  })
+
+  // Set the main source file
+  addSource(
+    `#text([Hello #sys.inputs.name!],fill: red)
+     #image("test.png")
+    `, 
+    "main.typ"
+  )
+
   // Get rendered SVG
   let doc = renderSvgMerged()
+
   // Output it
   preview.innerHTML = doc
 };
