@@ -4,14 +4,19 @@ SVG/PDF render some typst text, only got it working with vite, and kind of with 
 # Usage
 
 ```ts
-import init, { addFont, setSource, renderSvgMerged } from '@djakish/render-typst'
+import init, { addFont, addSource, renderSvgMerged } from '@djakish/render-typst'
 import lin_font_r from '../assets/fonts/LinLibertine_R.ttf'
 
 // Load a font
 await addFont(lin_font_r)
 
-// Set source to the wasm 
-setSource(`#text("Hello world!",fill: red)`);
+// Set input values
+setInputs({
+    "name": "world",
+})
+
+// Set the main source file
+addSource(`#text([Hello #sys.inputs.name!],fill: red)`, "main.typ")
 
 // Get rendered SVG
 let doc = renderSvgMerged()
@@ -22,7 +27,7 @@ let doc = renderSvgMerged()
 With vite you would need [vite-plugin-wasm](https://www.npmjs.com/package/vite-plugin-wasm) and [vite-plugin-top-level-await](https://www.npmjs.com/package/vite-plugin-top-level-await).
 
 
-# Setting up wtih webpack 
+# Setting up with webpack 
 
 Next config that I got to work.
 ```js
@@ -59,7 +64,7 @@ Component that worked
 <button onClick={async (e) => {
     const typst = (await import("@djakish/render-typst"));
     await typst.addFont("/LinLibertine_R.ttf")
-    typst.setSource(`#text("Hello world!",fill: red)`);
+    typst.addSource(`#text("Hello world!",fill: red)`, "main.typ");
     let doc = typst.renderSvgMerged()
     let preview = document.querySelector<HTMLDivElement('#preview')!;
     preview.innerHTML = doc
@@ -69,7 +74,7 @@ Component that worked
 
 # Building 
 
-You need wasm-pack and rust, and dependecies for them.
+You need wasm-pack and rust, and dependencies for them.
 
 ```sh
 wasm-pack build --target bundler 
