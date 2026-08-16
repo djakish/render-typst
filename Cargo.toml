@@ -1,6 +1,6 @@
 [package]
 name = "render-typst"
-version = "0.1.11"
+version = "0.2.0"
 edition = "2021"
 repository = "https://github.com/djakish/render-typst/"
 keywords = ["typst", "wasm"]
@@ -11,26 +11,76 @@ description = "Render some typst in browser"
 crate-type = ["cdylib"]
 
 [dependencies]
-comemo = "0.4.0"
-wasm-bindgen = "0.2.87"
-wasm-bindgen-futures = "0.4.37"
-js-sys = "0.3.64"
-typst = "0.11.0"
-typst-pdf = "0.11.0"
-typst-svg = "0.11.0"
-typst-render = "0.11.0"
+comemo = "0.5.1"
+wasm-bindgen = "0.2.127"
+wasm-bindgen-futures = "0.4.77"
+js-sys = "0.3.104"
+typst = "0.15.1"
+typst-layout = "0.15.1"
+typst-pdf = "0.15.1"
+typst-svg = "0.15.1"
+typst-render = "0.15.1"
 serde-wasm-bindgen = "0.6.5"
 
 [profile.release]
 panic = 'abort'
 codegen-units = 1
 opt-level = "z"
-wasm-opt = ['-Oz']
 lto = true
 strip = true
+
+# `wasm-opt` is a wasm-pack setting; under `[profile.release]` cargo ignored it.
+# The bundled wasm-opt is older than rustc's default wasm feature set, so every
+# feature rustc emits has to be named or it refuses to validate the input.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = [
+    '-Oz',
+    '--enable-bulk-memory',
+    '--enable-multivalue',
+    '--enable-mutable-globals',
+    '--enable-nontrapping-float-to-int',
+    '--enable-reference-types',
+    '--enable-sign-ext',
+    '--enable-simd',
+]
 
 [package.metadata.wasm-pack.profile.release.wasm-bindgen]
 debug-js-glue = false
 demangle-name-section = true
 dwarf-debug-info = false
 omit-default-module-path = false
+
+[lints.clippy]
+# A panic in WASM aborts with an unreadable trap instead of a JS exception, so
+# every failure has to travel back to JS as an `Err`.
+unwrap_used = "warn"
+panic = "warn"
+panic_in_result_fn = "warn"
+unwrap_in_result = "warn"
+get_unwrap = "warn"
+todo = "warn"
+unimplemented = "warn"
+unreachable = "warn"
+
+# Untrusted input: source text from the caller, tar bytes from the registry.
+indexing_slicing = "warn"
+string_slice = "warn"
+
+# The world sits behind an `RwLock` and packages are fetched with `.await`.
+await_holding_lock = "warn"
+
+# Silent errors are the hardest kind to debug across the WASM boundary.
+let_underscore_must_use = "warn"
+unused_result_ok = "warn"
+map_err_ignore = "warn"
+
+# `pixel_per_pt` crosses from JS as an f64 and gets scaled into pixel counts.
+cast_sign_loss = "warn"
+cast_possible_truncation = "warn"
+lossy_float_literal = "warn"
+float_cmp = "warn"
+
+# Leftovers that should not reach a published package.
+dbg_macro = "warn"
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
