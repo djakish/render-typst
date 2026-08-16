@@ -1,0 +1,4 @@
+# Vite's swc binding needs its postinstall to run; pnpm blocks build scripts
+# until they are allowed here.
+allowBuilds:
+  '@swc/core': true
