@@ -166,10 +166,17 @@ crosses the wire:
 
 | | |
 | --- | --- |
-| raw | 20.2 MB |
-| gzip | 7.9 MB |
-| brotli | 5.9 MB |
+| raw | 18.9 MB |
+| gzip | 7.5 MB |
+| brotli | 5.8 MB |
 
 Serving it with brotli is worth more than any compiler flag here, so make sure
-compression is on for `.wasm` — and let the browser cache it, since the file
-only changes when this package is republished. `just size` prints all three.
+compression is on for `.wasm`, and let the browser cache it, since the file only
+changes when this package is republished. `just size` prints all three.
+
+The build asks for `simd128` in `.cargo/config.toml`, which needs Safari 16.4,
+Chrome 91, or Firefox 89. Measured against the same build without it, it is
+850 KB smaller raw and no slower, since tiny-skia keeps its vectorized raster
+pipeline behind that target feature. `opt-level` stays at `z`: building at `3`
+came out 40% larger and slower at SVG, which is what you get when the hot path
+is memoized tree walking rather than number crunching.

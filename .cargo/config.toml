@@ -1,0 +1,7 @@
+# Measured against the same build without it: 850 KB smaller raw, 100 KB
+# smaller after brotli, and no slower. tiny-skia has a simd128 raster pipeline
+# behind cfg(target_feature = "simd128"), which is off unless asked for.
+#
+# Needs Safari 16.4, Chrome 91, or Firefox 89.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]
